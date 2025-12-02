@@ -1,0 +1,40 @@
+stateDiagram-v2
+    [*] --> DISARMED
+
+    DISARMED: System Disarmed
+    DISARMED: LED = Green
+    DISARMED: Motion Ignored
+    DISARMED --> ARMED: Press S1 (Arm)
+
+    ARMED: System Armed
+    ARMED: LED = Blue
+    ARMED: Motion Active
+    ARMED --> DISARMED: Press S1 (Disarm)
+    ARMED --> ENTRY_DELAY: Motion Detected
+
+    state ENTRY_DELAY {
+        [*] --> WAIT_FOR_PIN
+
+        WAIT_FOR_PIN: Show "Enter PIN"
+        WAIT_FOR_PIN: Start 2 min timer
+        WAIT_FOR_PIN --> PIN_OK: Correct PIN
+        WAIT_FOR_PIN --> ATTEMPT_FAIL: Wrong PIN
+        WAIT_FOR_PIN --> TIMEOUT: 2 min elapsed
+
+        ATTEMPT_FAIL: Increment attempt count
+        ATTEMPT_FAIL --> WAIT_FOR_PIN: Attempts < 3
+        ATTEMPT_FAIL --> MAX_FAIL: Attempts == 3
+
+        TIMEOUT: Timer expired
+        MAX_FAIL: 3 wrong attempts
+    }
+
+    ENTRY_DELAY --> DISARMED: PIN_OK
+    ENTRY_DELAY --> ALARM: TIMEOUT
+    ENTRY_DELAY --> ALARM: MAX_FAIL
+
+    ALARM: Alarm Active
+    ALARM: LED = Red, Buzzer ON
+    ALARM --> DISARMED: Correct PIN / Reset
+
+    DISARMED --> [*]
