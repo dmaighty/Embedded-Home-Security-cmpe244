@@ -24,6 +24,8 @@ extern volatile bool motion_detected;
 extern volatile bool pin_correct;
 extern volatile bool pin_wrong;
 extern volatile bool reset_pressed;
+extern volatile bool entry_button_pressed;
+
 
 // --------------------
 // Counters / Timers

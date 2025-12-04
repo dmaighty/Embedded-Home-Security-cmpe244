@@ -4,22 +4,27 @@
 #include <task.h>
 
 #include "ti_drivers_config.h"
-
-// flag used by FSM
-extern volatile bool button_pressed;
+#include "shared.h"
 
 void ButtonTask(void *arg)
 {
-    bool last = false;
+    bool lastS1 = false;
+    bool lastS2 = false;
 
     for (;;) {
-        bool now = (GPIO_read(CONFIG_GPIO_S1) == 0); // pressed = low
+        bool nowS1 = (GPIO_read(CONFIG_GPIO_S1) == 0);
+        bool nowS2 = (GPIO_read(CONFIG_GPIO_S2) == 0);
 
-        if (now && !last) {
+        if (nowS1 && !lastS1) {
             button_pressed = true;
         }
+        if (nowS2 && !lastS2) {
+            entry_button_pressed = true;
+        }
 
-        last = now;
-        vTaskDelay(pdMS_TO_TICKS(20));  // debounce
+        lastS1 = nowS1;
+        lastS2 = nowS2;
+
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }

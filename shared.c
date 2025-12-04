@@ -9,6 +9,8 @@ volatile bool motion_detected = false;
 volatile bool pin_correct = false;
 volatile bool pin_wrong = false;
 volatile bool reset_pressed = false;
+volatile bool entry_button_pressed = false;
+
 
 // Counters
 volatile uint8_t attempts = 0;

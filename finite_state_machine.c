@@ -65,7 +65,13 @@ void FSM_Task(void) {
             else if (motion_detected) {
                 current_state = ENTRY;
                 timer_seconds = 120;
-                attempts = 0;
+                attempts = 3;
+            }
+            else if (entry_button_pressed){
+                // this is to test the state, we will be using the motion detector
+                current_state = ENTRY;
+                timer_seconds = 5;
+                attempts = 3;
             }
             break;
 

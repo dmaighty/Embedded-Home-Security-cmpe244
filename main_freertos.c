@@ -5,8 +5,8 @@
 #include <ti/drivers/GPIO.h>
 #include <ti/drivers/UART.h>
 #include <ti/drivers/Board.h>
-
 #include "ti_drivers_config.h"
+extern void TimerTask(void *arg);
 
 // application hooks, issues without this
 void vApplicationMallocFailedHook(void)
@@ -43,7 +43,8 @@ int main(void)
 
     // Create tasks
     xTaskCreate(ButtonTask, "Button", 768, NULL, 2, NULL);
-    xTaskCreate(FSM_Task_Wrapper, "FSM", 768, NULL, 3, NULL);
+	xTaskCreate(FSM_Task_Wrapper, "FSM", 768, NULL, 3, NULL);
+	xTaskCreate(TimerTask, "Timer", 768, NULL, 2, NULL);
 
     vTaskStartScheduler();
 
