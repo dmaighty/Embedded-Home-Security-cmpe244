@@ -13,5 +13,4 @@ volatile bool entry_button_pressed = false;
 
 
 // Counters
-volatile uint8_t attempts = 0;
 volatile uint16_t timer_seconds = 0;

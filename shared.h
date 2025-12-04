@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <FreeRTOS.h>
+#include <semphr.h>
 
 // --------------------
 // FSM State Variables
@@ -30,7 +32,6 @@ extern volatile bool entry_button_pressed;
 // --------------------
 // Counters / Timers
 // --------------------
-extern volatile uint8_t attempts;
 extern volatile uint16_t timer_seconds;
 
 // --------------------
@@ -42,5 +43,17 @@ enum led {
     GREEN,
     BLUE
 };
+
+// -----------------
+// Semaphores for task synchronization
+// -----------------
+
+SemaphoreHandle_t disarmedToArmed;
+SemaphoreHandle_t armedToEntry;
+SemaphoreHandle_t entryToAlarm;
+SemaphoreHandle_t entryToDisarmed;
+SemaphoreHandle_t alarmToDisarmed;
+
+SemaphoreHandle_t enterPinMode;
 
 #endif
