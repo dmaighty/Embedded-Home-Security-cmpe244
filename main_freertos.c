@@ -1,88 +1,52 @@
-#include <stdint.h>
+#include <stdbool.h>
 #include <FreeRTOS.h>
 #include <task.h>
+#include <semphr.h>
 #include <ti/drivers/GPIO.h>
+#include <ti/drivers/UART.h>
 #include <ti/drivers/Board.h>
 
-extern void *temperatureThread(void *arg0);
-extern void *consoleThread(void *arg0);
+#include "ti_drivers_config.h"
 
-/* Stack size in 16-bit words */
-#define THREADSTACKSIZE    768 / sizeof(portSTACK_TYPE)
+// application hooks, issues without this
+void vApplicationMallocFailedHook(void)
+{
+    taskDISABLE_INTERRUPTS();
+    for(;;);
+}
 
-/*
- *  ======== main ========
- */
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+{
+    (void)xTask;
+    (void)pcTaskName;
+    taskDISABLE_INTERRUPTS();
+    for(;;);
+}
+
+// externs
+UART_Handle uart;
+
+extern void ButtonTask(void *arg);
+extern void FSM_Task_Wrapper(void *arg);
+
 int main(void)
 {
-    TaskHandle_t consoleHandle;
-    TaskHandle_t temperatureHandle;
-    BaseType_t   retc;
-
-    /* Call driver init functions */
     Board_init();
-
-    retc = xTaskCreate((TaskFunction_t)consoleThread,     // pvTaskCode
-                                "console",                // pcName
-                                THREADSTACKSIZE,          // usStackDepth
-                                NULL,                     // pvParameters
-                                1,                        // uxPriority
-                                &consoleHandle);          // pxCreatedTask
-    if (retc != pdPASS) {
-        /* xTaskCreate() failed */
-        while (1);
-    }
-
-    retc = xTaskCreate((TaskFunction_t)temperatureThread, // pvTaskCode
-                       "temperature",                     // pcName
-                       THREADSTACKSIZE,                   // usStackDepth
-                       NULL,                              // pvParameters
-                       2,                                 // uxPriority
-                       &temperatureHandle);               // pxCreatedTask
-    if (retc != pdPASS) {
-        /* xTaskCreate() failed */
-        while (1);
-    }
-
-    /* Initialize the GPIO since multiple threads are using it */
     GPIO_init();
+    UART_init();
 
-    /* Start the FreeRTOS scheduler */
+    // optional UART for debugging
+    UART_Params params;
+    UART_Params_init(&params);
+    params.baudRate = 115200;
+    uart = UART_open(CONFIG_UART_0, &params);
+
+    // Create tasks
+    xTaskCreate(ButtonTask, "Button", 768, NULL, 2, NULL);
+    xTaskCreate(FSM_Task_Wrapper, "FSM", 768, NULL, 3, NULL);
+
     vTaskStartScheduler();
 
-    return (0);
+    while (1) { }
 }
 
-//*****************************************************************************
-//
-//! \brief Application defined malloc failed hook
-//!
-//! \param  none
-//!
-//! \return none
-//!
-//*****************************************************************************
-void vApplicationMallocFailedHook()
-{
-    /* Handle Memory Allocation Errors */
-    while(1)
-    {
-    }
-}
-
-//*****************************************************************************
-//
-//! \brief Application defined stack overflow hook
-//!
-//! \param  none
-//!
-//! \return none
-//!
-//*****************************************************************************
-void vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName)
-{
-    //Handle FreeRTOS Stack Overflow
-    while(1)
-    {
-    }
-}

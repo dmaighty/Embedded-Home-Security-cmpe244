@@ -1,29 +1,56 @@
 // draft for the finite state machine controller
 
 
-enum state{
-    DISARMED,
-    ARMED,
-    ENTRY,
-    ALARM
-};
+#include <stdbool.h>
+#include <ti/drivers/GPIO.h>
+#include "ti_drivers_config.h"
+#include <FreeRTOS.h>
+#include <task.h>
+#include "shared.h"
 
-enum led{
-    RED,
-    ORANGE,
-    GREEN,
-    BLUE
-};
+//enum state current_state = DISARMED;
 
-enum state current_state = DISARMED;
-void set_led(enum led color);
+void set_led(enum led color)
+{
+    // turn everything off first
+    GPIO_write(CONFIG_GPIO_LED_GREEN, 0);
+    GPIO_write(CONFIG_GPIO_LED_BLUE, 0);
+    GPIO_write(CONFIG_GPIO_LED_RED, 0);
+
+    switch (color)
+    {
+        case GREEN:
+            GPIO_write(CONFIG_GPIO_LED_GREEN, 1);
+            break;
+
+        case BLUE:
+            GPIO_write(CONFIG_GPIO_LED_BLUE, 1);
+            break;
+
+        case RED:
+            GPIO_write(CONFIG_GPIO_LED_RED, 1);
+            break;
+
+        case ORANGE:
+            //Red + Green, but we need to dim down green
+            GPIO_write(CONFIG_GPIO_LED_RED, 1);
+            GPIO_write(CONFIG_GPIO_LED_GREEN, 1);
+            vTaskDelay(pdMS_TO_TICKS(5));
+            GPIO_write(CONFIG_GPIO_LED_GREEN, 0);
+            vTaskDelay(pdMS_TO_TICKS(1));
+            break;
+
+        default:
+            break;
+    }
+}
 
 // Main FSM task
 void FSM_Task(void) {
     switch (current_state) {
+
         case DISARMED:
             set_led(GREEN);
-			// LCD show disarmed
             if (button_pressed) {
                 current_state = ARMED;
                 attempts = 0;
@@ -32,59 +59,41 @@ void FSM_Task(void) {
 
         case ARMED:
             set_led(BLUE);
-			// LCD show armed
             if (button_pressed) {
                 current_state = DISARMED;
-                set_led(GREEN); 
             }
             else if (motion_detected) {
                 current_state = ENTRY;
-                timer = 120; 
+                timer_seconds = 120;
                 attempts = 0;
             }
             break;
 
         case ENTRY:
             set_led(ORANGE);
-			// LCD or UART: show "motion detected, enter pin"
+
             if (pin_correct) {
                 current_state = DISARMED;
-                set_led(GREEN); 
             }
             else if (pin_wrong) {
                 attempts++;
                 if (attempts >= 3) {
                     current_state = ALARM;
-                    set_led(RED);
-                    // Turn on alarm sound/buzzer
-                }
-                else {
-                    set_led(ORANGE);
-                    // LCD or UART show number of attempts remaining
                 }
             }
-            else if (timer == 0) {
+            else if (timer_seconds == 0) {
                 current_state = ALARM;
-                set_led(RED);
-                // Output LED and LCD updates here
-                // Turn on alarm sound/buzzer
             }
             break;
 
         case ALARM:
-			// LCD and UART: show "ALARM! Calling police!!"
             set_led(RED);
-            if (reset) {
+            if (reset_pressed) {
                 current_state = DISARMED;
-                set_led(GREEN);
-                // Output LED and LCD updates here
             }
             break;
     }
 
-    // Reset flags (these might be implemented in another task)
-    motion_detected = false;
+    // clear button flag
     button_pressed = false;
-    pin_correct = false;
-    pin_wrong = false;
 }
