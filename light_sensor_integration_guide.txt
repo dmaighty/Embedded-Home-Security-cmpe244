@@ -1,0 +1,23 @@
+INTEGRATION GUIDE
+-----------------
+
+1. Add LightSensor.c and LightSensor.h to the CCS project.
+
+2. In main_freertos.c:
+
+        #include "LightSensor.h"
+
+3. Before vTaskStartScheduler():
+
+        LightSensor_StartTask();
+
+4. Read global:
+
+        extern volatile uint8_t g_handNear;
+
+        if (g_handNear)
+            // hand near sensor
+        else
+            // bright light
+
+Done.
