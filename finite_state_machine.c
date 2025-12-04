@@ -7,6 +7,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include "shared.h"
+#include "lcd_functions.h"
 
 //enum state current_state = DISARMED;
 
@@ -52,8 +53,8 @@ void FSM_Task(void) {
         case DISARMED:
             set_led(GREEN);
             if (button_pressed) {
+                xSemaphoreGive(disarmedToArmed);
                 current_state = ARMED;
-                attempts = 0;
             }
             break;
 
@@ -65,13 +66,12 @@ void FSM_Task(void) {
             else if (motion_detected) {
                 current_state = ENTRY;
                 timer_seconds = 120;
-                attempts = 3;
             }
             else if (entry_button_pressed){
                 // this is to test the state, we will be using the motion detector
+                xSemaphoreGive(armedToEntry);
                 current_state = ENTRY;
-                timer_seconds = 5;
-                attempts = 3;
+                timer_seconds = 120;
             }
             break;
 
@@ -79,27 +79,31 @@ void FSM_Task(void) {
             set_led(ORANGE);
 
             if (pin_correct) {
+                pin_correct = false;
+                xSemaphoreGive(entryToDisarmed);
                 current_state = DISARMED;
             }
             else if (pin_wrong) {
-                attempts++;
-                if (attempts >= 3) {
-                    current_state = ALARM;
-                }
+                pin_wrong = false;
+                xSemaphoreGive(entryToAlarm);
+                current_state = ALARM;
             }
             else if (timer_seconds == 0) {
                 current_state = ALARM;
+                xSemaphoreGive(entryToAlarm);
             }
             break;
 
         case ALARM:
             set_led(RED);
-            if (reset_pressed) {
+            if (button_pressed) {
+                xSemaphoreGive(alarmToDisarmed);
                 current_state = DISARMED;
             }
             break;
     }
 
-    // clear button flag
+    // clear button flags
     button_pressed = false;
+    entry_button_pressed = false;
 }

@@ -7,6 +7,7 @@
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include <ti/grlib/grlib.h>
 #include "LcdDriver/Crystalfontz128x128_ST7735.h"
+#include "shared.h"
 #include <stdio.h>
 #include <FreeRTOS.h>
 #include <task.h>
@@ -57,6 +58,7 @@ void initJoystickButton(void);
 void ADC14_IRQHandler(void);
 static void drawPinScreen(void);
 void drawResultScreen(const char *msg);
+void drawTimeRemaining(uint16_t time);
 int pinsMatch(const uint8_t *a, const uint8_t *b);
 JoystickEvent readJoystick(void);
 void vEnterPin(void);

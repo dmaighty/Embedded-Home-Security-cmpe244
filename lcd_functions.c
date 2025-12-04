@@ -159,6 +159,27 @@ void drawResultScreen(const char *msg)
     Graphics_flushBuffer(&g_sContext);
 }
 
+void drawTimeRemaining(uint16_t time) {
+
+    char timeString[4];
+    sprintf(timeString, "%d", time);
+
+    Graphics_drawStringCentered(&g_sContext,
+                                (int8_t *)"Time Remaining",
+                                AUTO_STRING_LENGTH,
+                                64,
+                                70,
+                                OPAQUE_TEXT);
+
+    Graphics_drawStringCentered(&g_sContext,
+                                (int8_t *)timeString,
+                                AUTO_STRING_LENGTH,
+                                64,
+                                80,
+                                OPAQUE_TEXT);
+    Graphics_flushBuffer(&g_sContext);
+}
+
 int pinsMatch(const uint8_t *a, const uint8_t *b)
 {
     int i;
@@ -228,7 +249,7 @@ void vEnterPin(void){
 
     drawPinScreen();
 
-    while (1)
+    while (current_state == ENTRY)
     {
         JoystickEvent ev = readJoystick();
 
@@ -251,6 +272,7 @@ void vEnterPin(void){
                 //  CONFIRM PIN
                 pinState = STATE_CHECK;
             }
+            drawTimeRemaining(timer_seconds);
             break;
 
         case STATE_CHECK:
@@ -261,7 +283,6 @@ void vEnterPin(void){
                 attemptsLeft--;
                 if (attemptsLeft == 0) {
                     pinState = STATE_LOCKED;
-                    drawResultScreen("LOCKED OUT");
                 } else {
                     pinState = STATE_FAIL;
                     drawResultScreen("WRONG PIN");
@@ -270,7 +291,8 @@ void vEnterPin(void){
             break;
 
         case STATE_SUCCESS:
-            // You could stay here or go back to STATE_ENTER after a delay
+            pin_correct = true;
+            vTaskDelay(pdMS_TO_TICKS(20));
             break;
 
         case STATE_FAIL:
@@ -282,10 +304,10 @@ void vEnterPin(void){
             break;
 
         case STATE_LOCKED:
-            // Do nothing; require reset
+            pin_wrong = true;
+            vTaskDelay(pdMS_TO_TICKS(20));
             break;
         }
-
         __delay_cycles(2400000);   // small debounce / poll delay
     }
 }
@@ -298,7 +320,7 @@ void LCD_init(void){
 
 void pinTask(void *arg){
     while(1){
+        xSemaphoreTake(enterPinMode, portMAX_DELAY);
         vEnterPin();
-        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
