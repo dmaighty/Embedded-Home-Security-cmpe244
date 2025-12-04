@@ -6,6 +6,9 @@
 #include <ti/drivers/UART.h>
 #include <ti/drivers/Board.h>
 #include "ti_drivers_config.h"
+
+#include "lcd_functions.h"
+
 extern void TimerTask(void *arg);
 
 // application hooks, issues without this
@@ -34,7 +37,8 @@ int main(void)
     Board_init();
     GPIO_init();
     UART_init();
-
+    LCD_init();
+    
     // optional UART for debugging
     UART_Params params;
     UART_Params_init(&params);
@@ -45,6 +49,8 @@ int main(void)
     xTaskCreate(ButtonTask, "Button", 768, NULL, 2, NULL);
 	xTaskCreate(FSM_Task_Wrapper, "FSM", 768, NULL, 3, NULL);
 	xTaskCreate(TimerTask, "Timer", 768, NULL, 2, NULL);
+    xTaskCreate(pinTask, "Pin", 768, NULL, 3, NULL);
+
 
     vTaskStartScheduler();
 
