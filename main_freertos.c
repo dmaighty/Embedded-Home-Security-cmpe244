@@ -7,7 +7,9 @@
 #include <ti/drivers/Board.h>
 #include "ti_drivers_config.h"
 
-#include "lcd_functions.h"
+#include "freertos/lcd_functions.h"
+#include "freertos/LCDTask.h"
+#include "freertos/shared.h"
 
 extern void TimerTask(void *arg);
 
@@ -34,11 +36,20 @@ extern void FSM_Task_Wrapper(void *arg);
 
 int main(void)
 {
+    // Init all necessary peripherals
     Board_init();
     GPIO_init();
     UART_init();
     LCD_init();
-    
+
+    // Creating Semaphores for task synchronization
+    disarmedToArmed = xSemaphoreCreateBinary();
+    armedToEntry = xSemaphoreCreateBinary();
+    entryToDisarmed = xSemaphoreCreateBinary();
+    entryToAlarm = xSemaphoreCreateBinary();
+    enterPinMode = xSemaphoreCreateBinary();
+    alarmToDisarmed = xSemaphoreCreateBinary();
+
     // optional UART for debugging
     UART_Params params;
     UART_Params_init(&params);
@@ -46,9 +57,10 @@ int main(void)
     uart = UART_open(CONFIG_UART_0, &params);
 
     // Create tasks
-    xTaskCreate(ButtonTask, "Button", 768, NULL, 2, NULL);
-	xTaskCreate(FSM_Task_Wrapper, "FSM", 768, NULL, 3, NULL);
-	xTaskCreate(TimerTask, "Timer", 768, NULL, 2, NULL);
+    xTaskCreate(ButtonTask, "Button", 768, NULL, 1, NULL);
+    xTaskCreate(FSM_Task_Wrapper, "FSM", 768, NULL, 4, NULL);
+    xTaskCreate(TimerTask, "Timer", 768, NULL, 5, NULL);
+    xTaskCreate(LCDTask, "LCD", 768, NULL, 1, NULL);
     xTaskCreate(pinTask, "Pin", 768, NULL, 3, NULL);
 
 
