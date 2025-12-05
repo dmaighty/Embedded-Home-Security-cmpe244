@@ -1,23 +1,41 @@
-INTEGRATION GUIDE
------------------
+# **INTEGRATION GUIDE (SHORT)**
 
-1. Add LightSensor.c and LightSensor.h to the CCS project.
+1. **Add files to the project**
 
-2. In main_freertos.c:
+   * Add `LightSensor.c`
+   * Add `LightSensor.h`
 
-        #include "LightSensor.h"
+2. **Include the module**
 
-3. Before vTaskStartScheduler():
+   ```c
+   #include "LightSensor.h"
+   ```
 
-        LightSensor_StartTask();
+3. **Start the light sensor + buzzer tasks**
+   Call this inside `main()` **before** `vTaskStartScheduler()`:
 
-4. Read global:
+   ```c
+   LightSensor_StartTask();
+   ```
 
-        extern volatile uint8_t g_handNear;
+4. **Use the global variables**
 
-        if (g_handNear)
-            // hand near sensor
-        else
-            // bright light
+   ```c
+   extern volatile uint8_t g_handNear;     // 1 = dark/object detected
+   extern volatile uint32_t g_lightRaw;    // OPT3001 raw value
+   extern volatile uint8_t g_alarmLatched; // 1 = alarm active (latched)
+   ```
 
-Done.
+5. **How to stop the buzzer**
+
+   ```c
+   g_alarmLatched = 0;   // clears alarm + stops buzzer
+   ```
+
+6. **How the module behaves**
+
+   * When it gets dark or an object is detected →
+     `g_handNear = 1` and `g_alarmLatched = 1`
+   * Buzzer **beeps continuously** while `g_alarmLatched == 1`
+   * Buzzer stops only when **your code** sets `g_alarmLatched = 0`
+
