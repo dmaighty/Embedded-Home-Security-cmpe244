@@ -8,9 +8,9 @@
 #include <task.h>
 #include "shared.h"
 #include "lcd_functions.h"
+#include "LightSensor.h"
 
-extern volatile uint8_t  g_handNear;
-extern volatile uint8_t  g_alarmLatched;
+//enum state current_state = DISARMED;
 
 void set_led(enum led color)
 {
@@ -61,21 +61,22 @@ void FSM_Task(void) {
 
         case ARMED:
             set_led(BLUE);
-            motion_detected = g_handNear;
             if (button_pressed) {
                 current_state = DISARMED;
-                xSemaphoreGive(armedToDisarmed);
             }
             else if (motion_detected) {
-                xSemaphoreGive(armedToEntry);
                 current_state = ENTRY;
-                g_alarmLatched = 1;
                 timer_seconds = 120;
             }
-            else if (entry_button_pressed){
-                // this is to test the state, we will be using the motion detector
+            else if (g_handNear == 1) {
+                // when light becomes DARK
+                current_state = ENTRY;
+                timer_seconds = 120;
                 xSemaphoreGive(armedToEntry);
-                g_alarmLatched = 1;
+            }
+            else if (entry_button_pressed){
+                // debug: press s2 to enter entry state
+                xSemaphoreGive(armedToEntry);
                 current_state = ENTRY;
                 timer_seconds = 120;
             }
@@ -86,7 +87,6 @@ void FSM_Task(void) {
 
             if (pin_correct) {
                 pin_correct = false;
-                g_alarmLatched = 0;
                 xSemaphoreGive(entryToDisarmed);
                 current_state = DISARMED;
             }
@@ -103,9 +103,10 @@ void FSM_Task(void) {
 
         case ALARM:
             set_led(RED);
+            g_alarmLatched = 1; // buzzer
             if (button_pressed) {
-                xSemaphoreGive(alarmToDisarmed);
                 g_alarmLatched = 0;
+                xSemaphoreGive(alarmToDisarmed);
                 current_state = DISARMED;
             }
             break;

@@ -202,7 +202,7 @@ static void vLightTask(void *arg)
     /* margin: how much drop from baseline counts as "hand near" */
     margin = (uint16_t)(baseline_raw / 4u + 50u);   /* 25% + offset */
 
-    /* threshold below which we say “dark / hand near */
+    /* threshold below which we say â€œdark / hand nearâ€� */
     if (baseline_raw > margin) {
         thresholdLow = (uint16_t)(baseline_raw - margin);
     } else {
@@ -219,6 +219,8 @@ static void vLightTask(void *arg)
 
             if (raw < thresholdLow) {
                 g_handNear = 1;   /* darker than baseline -> object/hand */
+                /* LATCH the alarm: once set, stays 1 until main clears */
+                // g_alarmLatched = 1;
             } else {
                 g_handNear = 0;   /* normal/bright */
                 /* DO NOT clear g_alarmLatched here */
@@ -243,7 +245,6 @@ static void vBuzzerTask(void *arg)
 {
     (void)arg;
     Buzzer_Init();
-    g_alarmLatched = 0;
 
     for (;;)
     {
@@ -264,7 +265,7 @@ static void vBuzzerTask(void *arg)
 
 
 /* ============================================================
- * PUBLIC API — START TASKS
+ * PUBLIC API â€” START TASKS
  * ============================================================*/
 void LightSensor_StartTask(void)
 {

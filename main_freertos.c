@@ -7,9 +7,12 @@
 #include <ti/drivers/Board.h>
 #include "ti_drivers_config.h"
 
-#include "freertos/lcd_functions.h"
-#include "freertos/LCDTask.h"
-#include "freertos/shared.h"
+
+// I had these files in the root project folder, but if yours is in a freertos folder, 
+// #include "freertos/lcd_functions.h", etc...
+#include "lcd_functions.h"
+#include "LCDTask.h"
+#include "shared.h"
 
 extern void TimerTask(void *arg);
 
@@ -62,6 +65,7 @@ int main(void)
     xTaskCreate(TimerTask, "Timer", 768, NULL, 5, NULL);
     xTaskCreate(LCDTask, "LCD", 768, NULL, 1, NULL);
     xTaskCreate(pinTask, "Pin", 768, NULL, 3, NULL);
+    LightSensor_StartTask(); // defines a xTaskCreate in there
 
 
     vTaskStartScheduler();
