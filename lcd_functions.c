@@ -171,6 +171,17 @@ void drawTimeRemaining(uint16_t time) {
                                 70,
                                 OPAQUE_TEXT);
 
+    if((time == 99) || (time == 9)) {
+        Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
+        Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)"100",
+                                    AUTO_STRING_LENGTH,
+                                    64,
+                                    80,
+                                    OPAQUE_TEXT);
+        Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
+    }
+
     Graphics_drawStringCentered(&g_sContext,
                                 (int8_t *)timeString,
                                 AUTO_STRING_LENGTH,

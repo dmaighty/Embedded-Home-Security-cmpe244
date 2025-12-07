@@ -14,9 +14,15 @@ void LCDTask(void *arg0) {
 
         case ARMED:
             drawResultScreen("ARMED");
-            if(xSemaphoreTake(armedToEntry, portMAX_DELAY) == pdTRUE) {
-                break;
+            while(1) {
+                if(xSemaphoreTake(armedToEntry, pdMS_TO_TICKS(100)) == pdTRUE) {
+                    break;
+                }
+                else if(xSemaphoreTake(armedToDisarmed, pdMS_TO_TICKS(100)) == pdTRUE) {
+                    break;
+                }
             }
+            break;
 
         case ENTRY:
             xSemaphoreGive(enterPinMode);

@@ -49,6 +49,7 @@ enum led {
 // -----------------
 
 SemaphoreHandle_t disarmedToArmed;
+SemaphoreHandle_t armedToDisarmed;
 SemaphoreHandle_t armedToEntry;
 SemaphoreHandle_t entryToAlarm;
 SemaphoreHandle_t entryToDisarmed;
